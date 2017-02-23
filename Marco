@@ -1,1 +1,73 @@
+#include <stdio.h>
+#include <stdlib.h>
 
+int videos, endpoints, requests, caches, dimension;
+
+void main(int argc, char *argv[]) {
+    printf("Hello, World!\n");
+
+
+    if(argc != 2){
+        printf("Wrong number of arguments\n");
+        exit(0);
+    }
+
+    FILE *input = fopen(argv[1], "r");
+    printf("ciaowwer");
+    if(input == NULL){
+        printf("Failed opening file\n");
+        exit(0);
+    }
+
+    fscanf(input, "%d %d %d %d %d", &videos, &endpoints, &requests, &caches, &dimension);
+
+    /*//allocare dinamicamente
+    int sizes[videos]; //numero del video come indirizzo, dimensione dei video come valore
+    int latency[endpoints]; //numero di endpoint come indirizzo, latenza verso il datacenter come valore
+    int latency_to_cache[endpoints][caches]; //primo indirizzo indica l'endpoint, secondo il numero della cache,
+                                        // valore la latenza in millisecondi.
+    int number_of_caches[endpoints]; //indirizzo indica l'endpoint, valore il numer delle cache
+    int request_videos[endpoints][videos]; //primo indirizzo endpoint, secondo indirizzo video,
+                                                //valore numero delle richieste*/
+
+
+    //allocare dinamicamente
+    printf("ciao");
+    int sizes[10000]; //numero del video come indirizzo, dimensione dei video come valore
+    printf("ciaocome");
+    int latency[1000]; //numero di endpoint come indirizzo, latenza verso il datacenter come valore
+    int latency_to_cache[1000][500]; //primo indirizzo indica l'endpoint, secondo il numero della cache,
+    // valore la latenza in millisecondi.
+    int number_of_caches[1000]; //indirizzo indica l'endpoint, valore il numer delle cache
+    int request_videos[1000][10000]; //primo indirizzo endpoint, secondo indirizzo video,
+    //valore numero delle richieste
+
+    for (int i = 0; i < videos; ++i) {
+        fscanf(input, "%d", &sizes[i]);
+    }
+
+    int temp_caches; //numero delle cache per ogni endpoint
+    int temp_caches1; //numero esatto della cache
+
+    for (int j = 0; j < endpoints; ++j) {
+        fscanf(input, "%d %d", &latency[j], &temp_caches);
+        number_of_caches[j] = temp_caches;
+        for (int i = 0; i < temp_caches; ++i) {
+            fscanf(input, "%d %d", &temp_caches1, &latency_to_cache[j][temp_caches1]);
+        }
+    }
+
+    int temp1, temp2;
+
+    for (int k = 0; k < endpoints; ++k) {
+        for (int i = 0; i < videos; ++i) {
+            fscanf(input, "%d %d %d", &temp1, &temp2, &request_videos[temp2][temp1]);
+        }
+    }
+
+
+
+
+    fclose(input);
+
+}
