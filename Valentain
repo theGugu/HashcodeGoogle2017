@@ -1,1 +1,29 @@
-
+void genTPerm(int *vett,int k,int *val,unsigned int n,FILE*fout){
+    int i;
+    if (k == n - 1) {
+        for(i = 0; i< n; i++) {
+                fprintf(fout, "%d ", vett[i]);
+        }
+        fprintf(fout,"\n");
+        }else{
+        for (i = 0; i < n; i++) {
+            if (val[i] == 0) {
+                vett[k + 1] = i;
+                val[i] = 1;
+                genTPerm(vett, k + 1, val, n,fout);
+                val[i] = 0;
+            }
+        }
+    }
+}
+//ho bisogno di un vettore di interi (*vett) con valori da 0 a n che idicano i video
+//k da passare deve essere -1
+//val e vett al primo passaggio sono lo stesso vettore di interi del primo commento
+//n è il numero di video per cache
+//ricordarsi da dichiarare il vettore nel main
+void(int n, int vett[]){
+  int i;
+  for(i=0;i<n;i++){
+    vett[i]=i;
+    }
+}
