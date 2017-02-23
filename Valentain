@@ -1,29 +1,34 @@
-void genTPerm(int *vett,int k,int *val,unsigned int n,FILE*fout){
-    int i;
-    if (k == n - 1) {
-        for(i = 0; i< n; i++) {
-                fprintf(fout, "%d ", vett[i]);
-        }
-        fprintf(fout,"\n");
-        }else{
-        for (i = 0; i < n; i++) {
-            if (val[i] == 0) {
-                vett[k + 1] = i;
-                val[i] = 1;
-                genTPerm(vett, k + 1, val, n,fout);
-                val[i] = 0;
+int miglior_priorita(double cache[], int nVideo, FILE *fin, int lungFile, int video[], int dimC,
+                     int gVideo[]) {//restituisce il numero di video massimo
+    
+    int i, j, indice, contaVideo=0, tempVideo[nVideo], contaVideo_temp, sommaDim;
+    double pMax=-1, pTemp;
+    
+    for (i = 0; i < lungFile; ) {        
+        contaVideo_temp = 0;//inizializzo il ocntaotre di video e la somma a 0
+        sommaDim = 0;
+        pTemp=0;
+        for (j = 0; j < nVideo; j++) {
+            fscanf(fin, "%d", &indice);
+            if (cache[indice] != 0) {
+                if(sommaDim + gVideo[indice]<= dimC) {
+                    sommaDim += gVideo[indice];
+                    tempVideo[contaVideo_temp++] = indice;
+                    pTemp += cache[indice];
+                }else{
+                    j=nVideo;
+                }
             }
+            if(pTemp>pMax){
+                pMax=pTemp;
+                contaVideo=contaVideo_temp;
+                int k;
+                for(k=0;k<contaVideo_temp;k++){
+                    video[k]=tempVideo[k];
+                }
+            }        
         }
+        i++;
     }
-}
-//ho bisogno di un vettore di interi (*vett) con valori da 0 a n che idicano i video
-//k da passare deve essere -1
-//val e vett al primo passaggio sono lo stesso vettore di interi del primo commento
-//n è il numero di video per cache
-//ricordarsi da dichiarare il vettore nel main
-void(int n, int vett[]){
-  int i;
-  for(i=0;i<n;i++){
-    vett[i]=i;
-    }
+    return contaVideo;
 }
