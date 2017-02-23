@@ -13,7 +13,8 @@ void main(int argc, char *argv[]) {
     }
 
     FILE *input = fopen(argv[1], "r");
-    printf("ciaowwer");
+    //FILE *ciao = fopen("ciao.dat", "w");
+    
     if(input == NULL){
         printf("Failed opening file\n");
         exit(0);
@@ -21,32 +22,27 @@ void main(int argc, char *argv[]) {
 
     fscanf(input, "%d %d %d %d %d", &videos, &endpoints, &requests, &caches, &dimension);
 
-    /*//allocare dinamicamente
-    int sizes[videos]; //numero del video come indirizzo, dimensione dei video come valore
-    int latency[endpoints]; //numero di endpoint come indirizzo, latenza verso il datacenter come valore
+    int *sizes = (*int)malloc(videos*sizeof(int));
+    int *latency = (*int)malloc(endpoints*sizeof(int));
+    //numero di endpoint come indirizzo, latenza verso il datacenter come valore
     int latency_to_cache[endpoints][caches]; //primo indirizzo indica l'endpoint, secondo il numero della cache,
                                         // valore la latenza in millisecondi.
-    int number_of_caches[endpoints]; //indirizzo indica l'endpoint, valore il numer delle cache
-    int request_videos[endpoints][videos]; //primo indirizzo endpoint, secondo indirizzo video,
-                                                //valore numero delle richieste*/
-
-    //allocare dinamicamente
-    printf("ciao");
-    int i;
-    int sizes[10000]; //numero del video come indirizzo, dimensione dei video come valore
-    printf("ciaocome");
-    int latency[1000]; //numero di endpoint come indirizzo, latenza verso il datacenter come valore
-    int latency_to_cache[1000][500]; //primo indirizzo indica l'endpoint, secondo il numero della cache,
-    // valore la latenza in millisecondi.
-    int number_of_caches[1000]; //indirizzo indica l'endpoint, valore il numer delle cache
-
-    int **request_videos = (int**)malloc(1000*sizeof(int)); //primo indirizzo endpoint, secondo indirizzo video,
-    for(i=0; i<1000; i++)
+                                        
+                                            int **latency_to_cache = (int**)malloc(endpoints*sizeof(int)); //primo indirizzo endpoint, secondo indirizzo video,
+    for(i=0; i<endpoints; i++)
     {
-        request_videos[i]=(int*)malloc(10000*sizeof(int));
+        request_videos[i]=(int*)malloc(caches*sizeof(int));
 
     }
-    //valore numero delle richieste
+    
+    int *number_of_caches = (*int)malloc(endpoints*sizeof(int));
+
+    int **request_videos = (int**)malloc(endpoints*sizeof(int)); //primo indirizzo endpoint, secondo indirizzo video,
+    for(i=0; i<endpoints; i++)
+    {
+        request_videos[i]=(int*)malloc(videos*sizeof(int));
+
+    }
 
     for (i = 0; i < videos; ++i) {
         fscanf(input, "%d", &sizes[i]);
@@ -54,19 +50,19 @@ void main(int argc, char *argv[]) {
 
     int temp_caches; //numero delle cache per ogni endpoint
     int temp_caches1; //numero esatto della cache
-
-    for (int j = 0; j < endpoints; ++j) {
+int j;
+    for (j = 0; j < endpoints; ++j) {
         fscanf(input, "%d %d", &latency[j], &temp_caches);
         number_of_caches[j] = temp_caches;
-        for (int i = 0; i < temp_caches; ++i) {
+        for (i = 0; i < temp_caches; ++i) {
             fscanf(input, "%d %d", &temp_caches1, &latency_to_cache[j][temp_caches1]);
         }
     }
 
     int temp1, temp2;
-
-    for (int k = 0; k < endpoints; ++k) {
-        for (int i = 0; i < videos; ++i) {
+int k;
+    for (k = 0; k < endpoints; ++k) {
+        for (i = 0; i < videos; ++i) {
             fscanf(input, "%d %d %d", &temp1, &temp2, &request_videos[temp2][temp1]);
         }
     }
@@ -74,5 +70,5 @@ void main(int argc, char *argv[]) {
 
 
     fclose(input);
-
+    
 }
