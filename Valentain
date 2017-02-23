@@ -31,4 +31,5 @@ int miglior_priorita(double cache[], int nVideo, FILE *fin, int lungFile, int vi
         i++;
     }
     return contaVideo;
+
 }
