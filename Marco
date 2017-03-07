@@ -1,100 +1,172 @@
-/*
-
-    QUESTA PARTE COMMENTATA E' CIO' CHE E' RIMASTO DEL VECCHIO CODICE, E' ANCORA DA SISTEMARE
-    FA DI NUOVO SEGMENTATION FAULT E IL PROBLEMA STA NELL'ULTIMO CICLO (VEDI COMMENTO SOTTO)
-
-    int temp1, temp2;
-
-    for (int k = 0; k < endpoints; ++k) {
-        for (int i = 0; i < videos; ++i) {
-            fscanf(input, "%d %d %d", &temp1, &temp2, &request_videos[temp2][temp1]);
-        }
-    }
-
-    for(i=0; i<caches; i++) for(ii=0; ii<videos; ii++)
-    {
-        priority[i][ii] = 0;
-        for(iii=0; iii<endpoints; iii++)
-        {
-            if(latency_to_cache[iii] > 0) priority[i][ii] += request_videos[iii][ii] * (latency[iii] - latency_to_cache[iii][i]) / (latency[iii] - 1.0);
-        }
-    }
-
-    fclose(input);
-
-}
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-int videos, endpoints, requests, caches, dimension;
+int videos, endpoints, requests, caches, dimension, verbose = 0;
 
-int main(int argc, char *argv[]) {
-
+int main(int argc, char *argv[])
+{
     // CONTROLLO ARGOMENTI E APERTURA FILE
 
     if(argc != 2){
-        printf("Wrong number of arguments");
-        exit(1);
+        if(argc == 3 && !strcmp("-v", argv[2])) verbose = 1;
+        else
+        {
+            printf("Wrong number of arguments");
+            exit(1);
+        }
     }
-    printf("Opening file...\n");
+    if(verbose) printf("Opening file...\n");
     FILE *input = fopen(argv[1], "r");
-    if(input == NULL){
+    if(input == NULL)
+    {
         printf("Failed opening file");
         exit(2);
     }
-    printf("File opened correctly\n");
+    if(verbose) printf("File opened correctly\n");
+
+    // LETTURA PRIMA RIGA
+
+    fscanf(input, "%d %d %d %d %d\n", &videos, &endpoints, &requests, &caches, &dimension);
 
     // DICHIARAZIONE VARIABILI
 
     int i[3] = {};
 
-    // DICHIARAZIONE ARRAY                                                                              #  ID           #  VALUE
+    // DICHIARAZIONE ARRAY
+    // Ho sostituito malloc con calloc nelle latenze e nel numero di caches
+                                                                                     // #ID                #VALUE
+    int *sizes, *latency, *number_of_caches;
+    // array monodimensionale per salvare le dimensioni dei video                     //  video              size video
+    sizes = (int *)malloc(videos*sizeof(int));
+    // array per le latenze verso il datacenter                                       //  endpoint           latenza verso datacenter
+    latency = (int *)calloc(endpoints, sizeof(int));
+    // array di comodo per salvare il numero di caches connesse a ogni endpoint       //  endpoint           numero di caches connesse
+    number_of_caches = (int *)calloc(endpoints, sizeof(int));
 
-    int sizes[videos];                                                                                  // video        size video
-    int latency[endpoints];                                                                             // endpoint     latenza verso datacenter
-    int number_of_caches[endpoints];                                                                    // endpoint     numero di caches connesse
+    // DICHIARAZIONE MATRICI
 
-    // DICHIARAZIONE MATRICI                                                                            #  ID_1         #  ID_2         #  VALUE
+    // ATTENZIONE CAMBIO METODO DI DICHIARAZIONE DELLE MATRICI
+    // IN QUESTA PROVA SARANNO ARRAY MONODIMENSIONALI, ACCEDERO' ALLE
+    // RIGHE DIVERSE TRAMITE L'INDIRIZZO : (nome+ID_1*lunghezza_riga+ID_2)
+    // EDIT, basta trattarlo come un array: nome_array[ID_1*lunghezza_riga + ID_2]
 
-    int **latency_to_cache = (int**)malloc(endpoints*sizeof(int));                                      // endpoint     cache           latenza verso cache
-    for(i[0]=0; i[0]<endpoints; i[0]++) latency_to_cache[i[0]]=(int*)malloc(caches*sizeof(int));        // 0 if NULL (no connection)
+    // HO SCELTO QUESTO METODO CHE SULLA RETE SEMBRA SIA PIU' USATO QUESTO PER LE MATRICI BIDIMENSIONALI ALMENO
+    // LA STRUTTURA MATRICIALE CHIARAMENTE E' PURA CONVENZIONE, BASTA METTERSI D'ACCORDO
 
-    int **request_videos = (int**)malloc(endpoints*sizeof(int));                                        // endpoint     videos          numero di richieste
-    for(i[0]=0; i[0]<endpoints; i[0]++) request_videos[i[0]]=(int*)malloc(videos*sizeof(int));          // 0 if NULL (no requests)
+    // memento : calloc alloca automaticamente a 0
 
-    double **priority = (double**)malloc(caches*sizeof(double));                                        // cache        videos          priority
-    for(i[0]=0; i[0]<caches; i[0]++) priority[i[0]]=(double*)malloc(videos*sizeof(double));             // 0 if NULL (no requests)
+    int *latency_to_cache, *request_videos;
+    double *priority;
+                                                                                        // #ID 1         #ID 2        #VALUE                                             #LUNGHEZZA RIGA
+    latency_to_cache = (int *)calloc(endpoints*caches, sizeof(int));                    //  endpoints     caches       latenza comunicazione da endpoint a cache server   caches
+    request_videos = (int *)calloc(endpoints*videos, sizeof(int));                      //  endpoints     videos       numero richieste video <ID_2> all endpoint <ID_1>  videos
+    priority = (double *)calloc(caches*videos, sizeof(double));                         //  caches        videos       valore di priorità per video rispetto alla cache   videos
 
-    // VIDEO SIZES
+    // VIDEO SIZES reading
 
     for(i[0]=0; i[0]<videos; i[0]++) {
         fscanf(input, "%d", &sizes[i[0]]);
     }
 
-    // CACHE CONNECTIONS
+    // VIDEO SIZES printf per il debug
 
-    for(i[0]=0; i[0]<endpoints; i[0]++) for(i[1]=0; i[1]<caches; i[1]++) latency_to_cache[i[0]][i[1]] = 0;
-
-    // LATENCIES
-
-    for(i[0]=0; i[0]<endpoints; i[0]++)
+    if(verbose)
     {
-        fscanf("%d %d", &latency[i[0]], &number_of_caches[i[0]]);
-        int tmp_cache;
-        for(i[1]=0; i[1]<number_of_caches[i[0]]; i[1]++) fscanf("%d %d", &tmp_cache, &latency_to_cache[i[0]][tmp_cache]);
+        printf("\n\nARRAY CON VIDEO E DIMENSIONI\n\n");
+        for(i[0]=0;  i[0]<videos; i[0]++) printf("Video %5d:\t\t%.4d\n", i[0], sizes[i[0]]);
     }
 
-    // VIDEO REQUESTS
-    // CI DEVE ESSERE QUALCOSA DI SBAGLIATO QUA
-    // IL WHILE E' CORRETTO? MEGLIO UN FOR? QUEL EOF VA BENE? FORSE LA SEGMENTAZIONE E' DOVUTA AL PUNTATORE (input) ENORME
+    // LATENCIES reading
 
-    int tmp_video;
-    int tmp_endpoint;
-    while(input!=EOF)
+    if(verbose) printf("Completamento latenze (caches)...");
+    for(i[0]=0;  i[0]<endpoints; i[0]++)
     {
-        fscanf("%d %d %d", &tmp_video, &tmp_endpoint, &request_videos[tmp_endpoint][tmp_video]);
+        fscanf(input, "%d %d\n", &latency[i[0]], &number_of_caches[i[0]]);
+        int tmp_cache;
+        int tmp_lat;
+        for(i[1]=0; i[1]<number_of_caches[i[0]]; i[1]++)
+        {
+            fscanf(input, "%d %d",&tmp_cache, &tmp_lat);
+            latency_to_cache[i[0]*caches+tmp_cache] = tmp_lat;
+        }
+        if(verbose) printf(" %3.1f", 100.0*i[0]/endpoints);
+    }
+
+    // LATENCIES printf per il debug
+
+    if(verbose)
+    {
+        printf("\n\nMATRICE CON ENDPOINTS E LATENZE RISPETTO A CACHES, SE NON RAGGIUNTA E' 0\n\n");
+
+        for(i[0]=0;  i[0]<endpoints; i[0]++)
+        {
+            for(i[1]=0; i[1]<caches; i[1]++) printf("%.4d ", latency_to_cache[i[0]*caches+i[1]]);
+            printf("\n");
+        }
+    }
+
+    // VIDEO REQUESTS reading
+
+    int tmp_video, tmp_endpoint, tmp_request;
+
+    while(!feof(input))
+    {
+        fscanf(input, "%d %d %d", &tmp_video, &tmp_endpoint, &tmp_request);
+        request_videos[tmp_endpoint*videos+tmp_video] = tmp_request;
+    }
+
+    // VIDEO REQUESTS printf per il debug
+
+    if(verbose)
+    {
+        printf("\n\nMATRICE CON ENDPOINT E RICHIESTE PER N VIDEO, SE 0 NON CI SONO RICHIESTE\n\n");
+
+        for(i[0]=0; i[0]<endpoints; i[0]++){
+            for(i[1]= 0; i[1]<videos; i[1]++) printf("%.6d ", request_videos[i[0]*videos+i[1]]);
+            printf("\n");
+        }
+    }
+
+    // PRIORITIES
+
+    if(verbose) printf("Completamento...");
+    for(i[0]=0; i[0]<caches; i[0]++)
+    {
+        for(i[1]=0; i[1]<videos; i[1]++)
+        {
+            priority[i[0]*videos+i[1]] = 0;
+            for(i[2]=0; i[2]<endpoints; i[2]++)
+            {
+                if(latency_to_cache[i[2]*caches+i[0]] > 0) priority[i[0]*videos+i[1]] += request_videos[i[2]*videos+i[1]] * (latency[i[2]] - latency_to_cache[i[2]*caches+i[0]]) / (latency[i[2]] - 1.0);
+            }
+        }
+        if(verbose) printf(" %3.1f", 100.0*i[0]/caches);
+    }
+
+    // PRIORITIES printf per il debug
+
+    if(verbose)
+    {
+        double med, min=priority[0], max=priority[0];
+        int c = 0;
+        printf("\n\nMATRICE CON CACHES E VIDEO PER PRIORITA', SE 0 NON PUO' ESSERE MESSO\n\n");
+
+        for(i[0]=0; i[0]<caches; i[0]++)
+        {
+            for(i[1]=0; i[1]<videos; i[1]++)
+            {
+                printf("%8f\t\t", priority[i[0]*videos+i[1]]);
+                if(priority[i[0]*videos+i[1]]>max) max = priority[i[0]*videos+i[1]];
+                if(priority[i[0]*videos+i[1]]<min) min = priority[i[0]*videos+i[1]];
+                med += priority[i[0]*videos+i[1]];
+                c++;
+                if(c%9==0) { printf("\n"); c=0; }
+            }
+            printf("\n");
+        }
+        med /= caches*videos;
+        printf("\nPriorita' minima: %7.3f\nPriorita' massima: %7.3f\nPriorita' media: %7.3f", min, max, med);
     }
 
     // CHIUSURA
